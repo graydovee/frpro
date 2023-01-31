@@ -5,7 +5,7 @@
                 <div>
                     <el-table :data="status" stripe style="width: 100%" :default-sort="{prop: 'type', order: 'ascending'}">
                         <el-table-column prop="name" label="name"></el-table-column>
-                        <el-table-column prop="type" label="type" width="150"></el-table-column>
+                        <el-table-column prop="type" label="type" width="200"></el-table-column>
                         <el-table-column prop="local_addr" label="local address" width="200"></el-table-column>
                         <el-table-column prop="plugin" label="plugin" width="200"></el-table-column>
                         <el-table-column prop="remote_addr" label="remote address"></el-table-column>
@@ -49,6 +49,9 @@
                 }
                 for (let s of json.https) {
                     this.status.push(s)
+                }
+                for (let s of json.https_reverse_proxy) {
+                  this.status.push(s)
                 }
                 for (let s of json.stcp) {
                     this.status.push(s)

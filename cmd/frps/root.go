@@ -44,6 +44,7 @@ var (
 	proxyBindAddr        string
 	vhostHTTPPort        int
 	vhostHTTPSPort       int
+	vhostHTTPSRPPort     int
 	vhostHTTPTimeout     int64
 	dashboardAddr        string
 	dashboardPort        int
@@ -75,6 +76,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&proxyBindAddr, "proxy_bind_addr", "", "0.0.0.0", "proxy bind address")
 	rootCmd.PersistentFlags().IntVarP(&vhostHTTPPort, "vhost_http_port", "", 0, "vhost http port")
 	rootCmd.PersistentFlags().IntVarP(&vhostHTTPSPort, "vhost_https_port", "", 0, "vhost https port")
+	rootCmd.PersistentFlags().IntVarP(&vhostHTTPSRPPort, "vhost_https_reverse_proxy_port", "", 0, "vhost https reverse proxy port")
 	rootCmd.PersistentFlags().Int64VarP(&vhostHTTPTimeout, "vhost_http_timeout", "", 60, "vhost http response header timeout")
 	rootCmd.PersistentFlags().StringVarP(&dashboardAddr, "dashboard_addr", "", "0.0.0.0", "dasboard address")
 	rootCmd.PersistentFlags().IntVarP(&dashboardPort, "dashboard_port", "", 0, "dashboard port")
@@ -164,6 +166,7 @@ func parseServerCommonCfgFromCmd() (cfg config.ServerCommonConf, err error) {
 	cfg.ProxyBindAddr = proxyBindAddr
 	cfg.VhostHTTPPort = vhostHTTPPort
 	cfg.VhostHTTPSPort = vhostHTTPSPort
+	cfg.VhostHTTPSRPPort = vhostHTTPSRPPort
 	cfg.VhostHTTPTimeout = vhostHTTPTimeout
 	cfg.DashboardAddr = dashboardAddr
 	cfg.DashboardPort = dashboardPort

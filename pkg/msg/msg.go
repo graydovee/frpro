@@ -103,6 +103,8 @@ type NewProxy struct {
 	HostHeaderRewrite string            `json:"host_header_rewrite,omitempty"`
 	Headers           map[string]string `json:"headers,omitempty"`
 	RouteByHTTPUser   string            `json:"route_by_http_user,omitempty"`
+	TlsKeys           string            `json:"tls_keys,omitempty"`
+	TlsCrts           string            `json:"tls_crts,omitempty"`
 
 	// stcp
 	Sk string `json:"sk,omitempty"`

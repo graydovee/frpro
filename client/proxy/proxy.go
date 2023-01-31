@@ -86,6 +86,11 @@ func NewProxy(ctx context.Context, pxyConf config.ProxyConf, clientCfg config.Cl
 			BaseProxy: &baseProxy,
 			cfg:       cfg,
 		}
+	case *config.HTTPSRPProxyConf:
+		pxy = &HTTPSRPProxy{
+			BaseProxy: &baseProxy,
+			cfg:       cfg,
+		}
 	case *config.HTTPSProxyConf:
 		pxy = &HTTPSProxy{
 			BaseProxy: &baseProxy,
@@ -205,6 +210,35 @@ func (pxy *HTTPProxy) Close() {
 }
 
 func (pxy *HTTPProxy) InWorkConn(conn net.Conn, m *msg.StartWorkConn) {
+	HandleTCPWorkConnection(pxy.ctx, &pxy.cfg.LocalSvrConf, pxy.proxyPlugin, pxy.cfg.GetBaseInfo(), pxy.limiter,
+		conn, []byte(pxy.clientCfg.Token), m)
+}
+
+// HTTP
+type HTTPSRPProxy struct {
+	*BaseProxy
+
+	cfg         *config.HTTPSRPProxyConf
+	proxyPlugin plugin.Plugin
+}
+
+func (pxy *HTTPSRPProxy) Run() (err error) {
+	if pxy.cfg.Plugin != "" {
+		pxy.proxyPlugin, err = plugin.Create(pxy.cfg.Plugin, pxy.cfg.PluginParams)
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+
+func (pxy *HTTPSRPProxy) Close() {
+	if pxy.proxyPlugin != nil {
+		pxy.proxyPlugin.Close()
+	}
+}
+
+func (pxy *HTTPSRPProxy) InWorkConn(conn net.Conn, m *msg.StartWorkConn) {
 	HandleTCPWorkConnection(pxy.ctx, &pxy.cfg.LocalSvrConf, pxy.proxyPlugin, pxy.cfg.GetBaseInfo(), pxy.limiter,
 		conn, []byte(pxy.clientCfg.Token), m)
 }

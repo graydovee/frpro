@@ -17,6 +17,8 @@ package util
 import (
 	"crypto/md5"
 	"crypto/rand"
+	"crypto/tls"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	mathrand "math/rand"
@@ -125,4 +127,50 @@ func RandomSleep(duration time.Duration, minRatio, maxRatio float64) time.Durati
 	d := duration * time.Duration(n) / time.Duration(1000)
 	time.Sleep(d)
 	return d
+}
+
+func LoadX509KeyPair(certBase64, keyBase64 string) (tls.Certificate, error) {
+	if certBase64 == "" || keyBase64 == "" {
+		return tls.Certificate{}, fmt.Errorf("no tls certif")
+	}
+	crt, err := base64.StdEncoding.DecodeString(certBase64)
+	if err != nil {
+		return tls.Certificate{}, err
+	}
+	key, err := base64.StdEncoding.DecodeString(keyBase64)
+	if err != nil {
+		return tls.Certificate{}, err
+	}
+	return tls.X509KeyPair(crt, key)
+}
+
+func LoadX509KeyPairs(crtBase64, keyBase64 string) ([]tls.Certificate, error) {
+	crts, err := SplitTlsCert(crtBase64, keyBase64)
+	if err != nil {
+		return nil, err
+	}
+
+	var certs []tls.Certificate
+	for _, crt := range crts {
+		cert, err := LoadX509KeyPair(crt[0], crt[1])
+		if err != nil {
+			return nil, err
+		}
+		certs = append(certs, cert)
+	}
+	return certs, nil
+}
+
+func SplitTlsCert(crtBase64, keyBase64 string) ([][2]string, error) {
+	crts := strings.Split(crtBase64, ",")
+	keys := strings.Split(keyBase64, ",")
+	if len(crts) != len(keys) {
+		return nil, fmt.Errorf("tls cert key num error")
+	}
+
+	var certs [][2]string
+	for i := 0; i < len(crts); i++ {
+		certs = append(certs, [2]string{strings.TrimSpace(crts[i]), strings.TrimSpace(keys[i])})
+	}
+	return certs, nil
 }

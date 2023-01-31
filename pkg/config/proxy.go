@@ -16,6 +16,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/fatedier/frp/pkg/util/util"
 	"net"
 	"reflect"
 	"strconv"
@@ -167,6 +168,14 @@ type HTTPProxyConf struct {
 	RouteByHTTPUser   string            `ini:"route_by_http_user" json:"route_by_http_user"`
 }
 
+// HTTPSRP
+type HTTPSRPProxyConf struct {
+	HTTPProxyConf `ini:",extends"`
+
+	TlsCrts string `ini:"tls_crts"`
+	TlsKeys string `ini:"tls_keys"`
+}
+
 // HTTPS
 type HTTPSProxyConf struct {
 	BaseProxyConf `ini:",extends"`
@@ -240,6 +249,12 @@ func DefaultProxyConf(proxyType string) ProxyConf {
 	case consts.HTTPProxy:
 		conf = &HTTPProxyConf{
 			BaseProxyConf: defaultBaseProxyConf(proxyType),
+		}
+	case consts.HTTPSReverseProxyProxy:
+		conf = &HTTPSRPProxyConf{
+			HTTPProxyConf: HTTPProxyConf{
+				BaseProxyConf: defaultBaseProxyConf(proxyType),
+			},
 		}
 	case consts.HTTPSProxy:
 		conf = &HTTPSProxyConf{
@@ -798,6 +813,66 @@ func (cfg *HTTPProxyConf) CheckForSvr(serverCfg ServerCommonConf) (err error) {
 	}
 
 	return
+}
+
+// HTTPS Reverse proxy
+func (cfg *HTTPSRPProxyConf) UnmarshalFromMsg(pMsg *msg.NewProxy) {
+	cfg.HTTPProxyConf.UnmarshalFromMsg(pMsg)
+	cfg.TlsKeys = pMsg.TlsKeys
+	cfg.TlsCrts = pMsg.TlsCrts
+}
+
+func (cfg *HTTPSRPProxyConf) UnmarshalFromIni(prefix string, name string, section *ini.Section) error {
+	err := preUnmarshalFromIni(cfg, prefix, name, section)
+	if err != nil {
+		return err
+	}
+
+	// Add custom logic unmarshal if exists
+	cfg.Headers = GetMapWithoutPrefix(section.KeysHash(), "header_")
+	return nil
+}
+
+func (cfg *HTTPSRPProxyConf) MarshalToMsg(pMsg *msg.NewProxy) {
+	cfg.BaseProxyConf.marshalToMsg(pMsg)
+
+	// Add custom logic marshal if exists
+	pMsg.CustomDomains = cfg.CustomDomains
+	pMsg.SubDomain = cfg.SubDomain
+	pMsg.Locations = cfg.Locations
+	pMsg.HostHeaderRewrite = cfg.HostHeaderRewrite
+	pMsg.HTTPUser = cfg.HTTPUser
+	pMsg.HTTPPwd = cfg.HTTPPwd
+	pMsg.Headers = cfg.Headers
+	pMsg.RouteByHTTPUser = cfg.RouteByHTTPUser
+	pMsg.TlsKeys = cfg.TlsKeys
+	pMsg.TlsCrts = cfg.TlsCrts
+}
+
+func (cfg *HTTPSRPProxyConf) CheckForCli() error {
+	if err := cfg.HTTPProxyConf.CheckForCli(); err != nil {
+		return err
+	}
+	_, err := util.LoadX509KeyPairs(cfg.TlsCrts, cfg.TlsKeys)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (cfg *HTTPSRPProxyConf) CheckForSvr(conf ServerCommonConf) error {
+	return cfg.HTTPProxyConf.CheckForSvr(conf)
+}
+
+func (cfg *HTTPSRPProxyConf) Compare(conf ProxyConf) bool {
+	proxyConf, ok := conf.(*HTTPSRPProxyConf)
+	if !ok {
+		return false
+	}
+	if !cfg.HTTPProxyConf.Compare(&proxyConf.HTTPProxyConf) {
+		return false
+	}
+	return cfg.TlsKeys == cfg.TlsKeys && cfg.TlsCrts == cfg.TlsCrts
 }
 
 // HTTPS

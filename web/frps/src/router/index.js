@@ -4,6 +4,7 @@ import Overview from '../components/Overview.vue'
 import ProxiesTcp from '../components/ProxiesTcp.vue'
 import ProxiesUdp from '../components/ProxiesUdp.vue'
 import ProxiesHttp from '../components/ProxiesHttp.vue'
+import ProxiesHttpsReverseProxy from '../components/ProxiesHttpsReverseProxy.vue'
 import ProxiesHttps from '../components/ProxiesHttps.vue'
 import ProxiesStcp from '../components/ProxiesStcp.vue'
 import ProxiesSudp from '../components/ProxiesSudp.vue'
@@ -27,6 +28,10 @@ export default new Router({
         path: '/proxies/http',
         name: 'ProxiesHttp',
         component: ProxiesHttp
+    }, {
+        path: '/proxies/https_reverse_proxy',
+        name: 'ProxiesHttpsReverseProxy',
+        component: ProxiesHttpsReverseProxy
     }, {
         path: '/proxies/https',
         name: 'ProxiesHttps',

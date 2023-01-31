@@ -90,6 +90,9 @@ type Service struct {
 	// HTTP vhost router
 	httpVhostRouter *vhost.Routers
 
+	// HTTPS reverse proxy vhost router
+	httpVhostReverseProxyRouter *vhost.Routers
+
 	// All resource managers and controllers
 	rc *controller.ResourceController
 
@@ -119,10 +122,11 @@ func NewService(cfg config.ServerCommonConf) (svr *Service, err error) {
 			TCPPortManager: ports.NewManager("tcp", cfg.ProxyBindAddr, cfg.AllowPorts),
 			UDPPortManager: ports.NewManager("udp", cfg.ProxyBindAddr, cfg.AllowPorts),
 		},
-		httpVhostRouter: vhost.NewRouters(),
-		authVerifier:    auth.NewAuthVerifier(cfg.ServerConfig),
-		tlsConfig:       tlsConfig,
-		cfg:             cfg,
+		httpVhostRouter:             vhost.NewRouters(),
+		httpVhostReverseProxyRouter: vhost.NewRouters(),
+		authVerifier:                auth.NewAuthVerifier(cfg.ServerConfig),
+		tlsConfig:                   tlsConfig,
+		cfg:                         cfg,
 	}
 
 	// Create tcpmux httpconnect multiplexer.
@@ -161,6 +165,9 @@ func NewService(cfg config.ServerCommonConf) (svr *Service, err error) {
 
 	// Init HTTP group controller
 	svr.rc.HTTPGroupCtl = group.NewHTTPGroupController(svr.httpVhostRouter)
+
+	// Init HTTPS reverse proxy group controller
+	svr.rc.HTTPSReverseProxyGroupCtl = group.NewHTTPGroupController(svr.httpVhostReverseProxyRouter)
 
 	// Init TCP mux group controller
 	svr.rc.TCPMuxGroupCtl = group.NewTCPMuxGroupCtl(svr.rc.TCPMuxHTTPConnectMuxer)
@@ -259,6 +266,23 @@ func NewService(cfg config.ServerCommonConf) (svr *Service, err error) {
 			_ = server.Serve(l)
 		}()
 		log.Info("http service listen on %s", address)
+	}
+
+	// Create http vhost muxer.
+	if cfg.VhostHTTPSRPPort > 0 {
+		rp := vhost.NewHTTPReverseProxy(vhost.HTTPReverseProxyOptions{
+			ResponseHeaderTimeoutS: cfg.VhostHTTPTimeout,
+		}, svr.httpVhostReverseProxyRouter)
+
+		address := net.JoinHostPort(cfg.ProxyBindAddr, strconv.Itoa(cfg.VhostHTTPSRPPort))
+
+		proxyServer := &vhost.HttpsReverseProxyServer{
+			Addr:         address,
+			ReserveProxy: rp,
+		}
+		svr.rc.HttpsReverseProxyServer = proxyServer
+		go proxyServer.Serve()
+		log.Info("https reverse proxy service listen on %s", address)
 	}
 
 	// Create https vhost muxer.
