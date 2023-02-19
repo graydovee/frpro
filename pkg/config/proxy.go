@@ -160,6 +160,7 @@ type HTTPProxyConf struct {
 	BaseProxyConf `ini:",extends"`
 	DomainConf    `ini:",extends"`
 
+	Redirect          string            `ini:"redirect" json:"redirect"`
 	Locations         []string          `ini:"locations" json:"locations"`
 	HTTPUser          string            `ini:"http_user" json:"http_user"`
 	HTTPPwd           string            `ini:"http_pwd" json:"http_pwd"`
@@ -768,6 +769,7 @@ func (cfg *HTTPProxyConf) UnmarshalFromMsg(pMsg *msg.NewProxy) {
 	cfg.CustomDomains = pMsg.CustomDomains
 	cfg.SubDomain = pMsg.SubDomain
 	cfg.Locations = pMsg.Locations
+	cfg.Redirect = pMsg.Redirect
 	cfg.HostHeaderRewrite = pMsg.HostHeaderRewrite
 	cfg.HTTPUser = pMsg.HTTPUser
 	cfg.HTTPPwd = pMsg.HTTPPwd
@@ -782,6 +784,7 @@ func (cfg *HTTPProxyConf) MarshalToMsg(pMsg *msg.NewProxy) {
 	pMsg.CustomDomains = cfg.CustomDomains
 	pMsg.SubDomain = cfg.SubDomain
 	pMsg.Locations = cfg.Locations
+	pMsg.Redirect = cfg.Redirect
 	pMsg.HostHeaderRewrite = cfg.HostHeaderRewrite
 	pMsg.HTTPUser = cfg.HTTPUser
 	pMsg.HTTPPwd = cfg.HTTPPwd

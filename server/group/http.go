@@ -63,6 +63,7 @@ type HTTPGroup struct {
 	groupKey        string
 	domain          string
 	location        string
+	redirect        string
 	routeByHTTPUser string
 
 	// CreateConnFuncs indexed by proxy name
@@ -103,9 +104,11 @@ func (g *HTTPGroup) Register(
 		g.domain = routeConfig.Domain
 		g.location = routeConfig.Location
 		g.routeByHTTPUser = routeConfig.RouteByHTTPUser
+		g.redirect = routeConfig.Redirect
 	} else {
 		if g.group != group || g.domain != routeConfig.Domain ||
-			g.location != routeConfig.Location || g.routeByHTTPUser != routeConfig.RouteByHTTPUser {
+			g.location != routeConfig.Location || g.redirect != routeConfig.Redirect ||
+			g.routeByHTTPUser != routeConfig.RouteByHTTPUser {
 			err = ErrGroupParamsInvalid
 			return
 		}

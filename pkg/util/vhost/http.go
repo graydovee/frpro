@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -302,6 +303,21 @@ func (rp *HTTPReverseProxy) injectRequestInfoToCtx(req *http.Request) *http.Requ
 	return req.Clone(newctx)
 }
 
+func (rp *HTTPReverseProxy) serveRedirect(rw http.ResponseWriter, req *http.Request) bool {
+	reqRouteInfo := req.Context().Value(RouteInfoKey).(*RequestRouteInfo)
+	host, _ := util.CanonicalHost(reqRouteInfo.Host)
+	routeConfig := rp.GetRouteConfig(host, reqRouteInfo.URL, reqRouteInfo.HTTPUser)
+	if routeConfig == nil {
+		return false
+	}
+	if routeConfig.Redirect == "" {
+		return false
+	}
+
+	http.Redirect(rw, req, filepath.Join(routeConfig.Redirect, reqRouteInfo.URL), http.StatusFound)
+	return true
+}
+
 func (rp *HTTPReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	domain, _ := util.CanonicalHost(req.Host)
 	location := req.URL.Path
@@ -316,6 +332,9 @@ func (rp *HTTPReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	if req.Method == http.MethodConnect {
 		rp.connectHandler(rw, newreq)
 	} else {
+		if rp.serveRedirect(rw, newreq) {
+			return
+		}
 		rp.proxy.ServeHTTP(rw, newreq)
 	}
 }

@@ -98,6 +98,7 @@ type NewProxy struct {
 	CustomDomains     []string          `json:"custom_domains,omitempty"`
 	SubDomain         string            `json:"subdomain,omitempty"`
 	Locations         []string          `json:"locations,omitempty"`
+	Redirect          string            `json:"redirect"`
 	HTTPUser          string            `json:"http_user,omitempty"`
 	HTTPPwd           string            `json:"http_pwd,omitempty"`
 	HostHeaderRewrite string            `json:"host_header_rewrite,omitempty"`
