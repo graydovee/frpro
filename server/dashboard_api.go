@@ -33,17 +33,17 @@ type GeneralResponse struct {
 }
 
 type serverInfoResp struct {
-	Version                    string `json:"version"`
-	BindPort                   int    `json:"bind_port"`
-	BindUDPPort                int    `json:"bind_udp_port"`
-	VhostHTTPPort              int    `json:"vhost_http_port"`
-	VhostHTTPSReverseProxyPort int    `json:"vhost_https_reverse_proxy_port"`
-	VhostHTTPSPort             int    `json:"vhost_https_port"`
-	KCPBindPort                int    `json:"kcp_bind_port"`
-	SubdomainHost              string `json:"subdomain_host"`
-	MaxPoolCount               int64  `json:"max_pool_count"`
-	MaxPortsPerClient          int64  `json:"max_ports_per_client"`
-	HeartBeatTimeout           int64  `json:"heart_beat_timeout"`
+	Version              string `json:"version"`
+	BindPort             int    `json:"bind_port"`
+	BindUDPPort          int    `json:"bind_udp_port"`
+	VhostHTTPPort        int    `json:"vhost_http_port"`
+	VhostHTTPSPort       int    `json:"vhost_https_port"`
+	VhostServerHTTPSPort int    `json:"vhost_server_https_port"`
+	KCPBindPort          int    `json:"kcp_bind_port"`
+	SubdomainHost        string `json:"subdomain_host"`
+	MaxPoolCount         int64  `json:"max_pool_count"`
+	MaxPortsPerClient    int64  `json:"max_ports_per_client"`
+	HeartBeatTimeout     int64  `json:"heart_beat_timeout"`
 
 	TotalTrafficIn  int64            `json:"total_traffic_in"`
 	TotalTrafficOut int64            `json:"total_traffic_out"`
@@ -71,17 +71,17 @@ func (svr *Service) APIServerInfo(w http.ResponseWriter, r *http.Request) {
 	log.Info("Http request: [%s]", r.URL.Path)
 	serverStats := mem.StatsCollector.GetServer()
 	svrResp := serverInfoResp{
-		Version:                    version.Full(),
-		BindPort:                   svr.cfg.BindPort,
-		BindUDPPort:                svr.cfg.BindUDPPort,
-		VhostHTTPPort:              svr.cfg.VhostHTTPPort,
-		VhostHTTPSReverseProxyPort: svr.cfg.VhostHTTPSRPPort,
-		VhostHTTPSPort:             svr.cfg.VhostHTTPSPort,
-		KCPBindPort:                svr.cfg.KCPBindPort,
-		SubdomainHost:              svr.cfg.SubDomainHost,
-		MaxPoolCount:               svr.cfg.MaxPoolCount,
-		MaxPortsPerClient:          svr.cfg.MaxPortsPerClient,
-		HeartBeatTimeout:           svr.cfg.HeartbeatTimeout,
+		Version:              version.Full(),
+		BindPort:             svr.cfg.BindPort,
+		BindUDPPort:          svr.cfg.BindUDPPort,
+		VhostHTTPPort:        svr.cfg.VhostHTTPPort,
+		VhostServerHTTPSPort: svr.cfg.VhostServerHTTPPSPort,
+		VhostHTTPSPort:       svr.cfg.VhostHTTPSPort,
+		KCPBindPort:          svr.cfg.KCPBindPort,
+		SubdomainHost:        svr.cfg.SubDomainHost,
+		MaxPoolCount:         svr.cfg.MaxPoolCount,
+		MaxPortsPerClient:    svr.cfg.MaxPortsPerClient,
+		HeartBeatTimeout:     svr.cfg.HeartbeatTimeout,
 
 		TotalTrafficIn:  serverStats.TotalTrafficIn,
 		TotalTrafficOut: serverStats.TotalTrafficOut,
@@ -121,7 +121,7 @@ type HTTPOutConf struct {
 	HostHeaderRewrite string   `json:"host_header_rewrite"`
 }
 
-type HTTPSRPOutConf struct {
+type SrvHTTPSOutConf struct {
 	HTTPOutConf
 }
 
@@ -148,8 +148,8 @@ func getConfByType(proxyType string) interface{} {
 		return &UDPOutConf{}
 	case consts.HTTPProxy:
 		return &HTTPOutConf{}
-	case consts.HTTPSReverseProxyProxy:
-		return &HTTPSRPOutConf{}
+	case consts.ServerHTTPSProxy:
+		return &SrvHTTPSOutConf{}
 	case consts.HTTPSProxy:
 		return &HTTPSOutConf{}
 	case consts.STCPProxy:

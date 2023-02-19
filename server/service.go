@@ -90,8 +90,8 @@ type Service struct {
 	// HTTP vhost router
 	httpVhostRouter *vhost.Routers
 
-	// HTTPS reverse proxy vhost router
-	httpVhostReverseProxyRouter *vhost.Routers
+	// Server HTTPS vhost router
+	serverHttpsVhostRouter *vhost.Routers
 
 	// All resource managers and controllers
 	rc *controller.ResourceController
@@ -122,11 +122,11 @@ func NewService(cfg config.ServerCommonConf) (svr *Service, err error) {
 			TCPPortManager: ports.NewManager("tcp", cfg.ProxyBindAddr, cfg.AllowPorts),
 			UDPPortManager: ports.NewManager("udp", cfg.ProxyBindAddr, cfg.AllowPorts),
 		},
-		httpVhostRouter:             vhost.NewRouters(),
-		httpVhostReverseProxyRouter: vhost.NewRouters(),
-		authVerifier:                auth.NewAuthVerifier(cfg.ServerConfig),
-		tlsConfig:                   tlsConfig,
-		cfg:                         cfg,
+		httpVhostRouter:        vhost.NewRouters(),
+		serverHttpsVhostRouter: vhost.NewRouters(),
+		authVerifier:           auth.NewAuthVerifier(cfg.ServerConfig),
+		tlsConfig:              tlsConfig,
+		cfg:                    cfg,
 	}
 
 	// Create tcpmux httpconnect multiplexer.
@@ -166,8 +166,8 @@ func NewService(cfg config.ServerCommonConf) (svr *Service, err error) {
 	// Init HTTP group controller
 	svr.rc.HTTPGroupCtl = group.NewHTTPGroupController(svr.httpVhostRouter)
 
-	// Init HTTPS reverse proxy group controller
-	svr.rc.HTTPSReverseProxyGroupCtl = group.NewHTTPGroupController(svr.httpVhostReverseProxyRouter)
+	// Init Server HTTPS group controller
+	svr.rc.ServerHTTPSGroupCtl = group.NewHTTPGroupController(svr.serverHttpsVhostRouter)
 
 	// Init TCP mux group controller
 	svr.rc.TCPMuxGroupCtl = group.NewTCPMuxGroupCtl(svr.rc.TCPMuxHTTPConnectMuxer)
@@ -269,20 +269,20 @@ func NewService(cfg config.ServerCommonConf) (svr *Service, err error) {
 	}
 
 	// Create http vhost muxer.
-	if cfg.VhostHTTPSRPPort > 0 {
+	if cfg.VhostServerHTTPPSPort > 0 {
 		rp := vhost.NewHTTPReverseProxy(vhost.HTTPReverseProxyOptions{
 			ResponseHeaderTimeoutS: cfg.VhostHTTPTimeout,
-		}, svr.httpVhostReverseProxyRouter)
+		}, svr.serverHttpsVhostRouter)
 
-		address := net.JoinHostPort(cfg.ProxyBindAddr, strconv.Itoa(cfg.VhostHTTPSRPPort))
+		address := net.JoinHostPort(cfg.ProxyBindAddr, strconv.Itoa(cfg.VhostServerHTTPPSPort))
 
-		proxyServer := &vhost.HttpsReverseProxyServer{
+		proxyServer := &vhost.ServerHttpsServer{
 			Addr:         address,
 			ReserveProxy: rp,
 		}
-		svr.rc.HttpsReverseProxyServer = proxyServer
+		svr.rc.HttpsReverseProxy = proxyServer
 		go proxyServer.Serve()
-		log.Info("https reverse proxy service listen on %s", address)
+		log.Info("server https service listen on %s", address)
 	}
 
 	// Create https vhost muxer.

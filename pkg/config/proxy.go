@@ -168,8 +168,8 @@ type HTTPProxyConf struct {
 	RouteByHTTPUser   string            `ini:"route_by_http_user" json:"route_by_http_user"`
 }
 
-// HTTPSRP
-type HTTPSRPProxyConf struct {
+// Server HTTPS
+type ServerHTTPSProxyConf struct {
 	HTTPProxyConf `ini:",extends"`
 
 	TlsCrts string `ini:"tls_crts"`
@@ -250,8 +250,8 @@ func DefaultProxyConf(proxyType string) ProxyConf {
 		conf = &HTTPProxyConf{
 			BaseProxyConf: defaultBaseProxyConf(proxyType),
 		}
-	case consts.HTTPSReverseProxyProxy:
-		conf = &HTTPSRPProxyConf{
+	case consts.ServerHTTPSProxy:
+		conf = &ServerHTTPSProxyConf{
 			HTTPProxyConf: HTTPProxyConf{
 				BaseProxyConf: defaultBaseProxyConf(proxyType),
 			},
@@ -815,14 +815,14 @@ func (cfg *HTTPProxyConf) CheckForSvr(serverCfg ServerCommonConf) (err error) {
 	return
 }
 
-// HTTPS Reverse proxy
-func (cfg *HTTPSRPProxyConf) UnmarshalFromMsg(pMsg *msg.NewProxy) {
+// ServerHTTPS
+func (cfg *ServerHTTPSProxyConf) UnmarshalFromMsg(pMsg *msg.NewProxy) {
 	cfg.HTTPProxyConf.UnmarshalFromMsg(pMsg)
 	cfg.TlsKeys = pMsg.TlsKeys
 	cfg.TlsCrts = pMsg.TlsCrts
 }
 
-func (cfg *HTTPSRPProxyConf) UnmarshalFromIni(prefix string, name string, section *ini.Section) error {
+func (cfg *ServerHTTPSProxyConf) UnmarshalFromIni(prefix string, name string, section *ini.Section) error {
 	err := preUnmarshalFromIni(cfg, prefix, name, section)
 	if err != nil {
 		return err
@@ -833,7 +833,7 @@ func (cfg *HTTPSRPProxyConf) UnmarshalFromIni(prefix string, name string, sectio
 	return nil
 }
 
-func (cfg *HTTPSRPProxyConf) MarshalToMsg(pMsg *msg.NewProxy) {
+func (cfg *ServerHTTPSProxyConf) MarshalToMsg(pMsg *msg.NewProxy) {
 	cfg.BaseProxyConf.marshalToMsg(pMsg)
 
 	// Add custom logic marshal if exists
@@ -849,7 +849,7 @@ func (cfg *HTTPSRPProxyConf) MarshalToMsg(pMsg *msg.NewProxy) {
 	pMsg.TlsCrts = cfg.TlsCrts
 }
 
-func (cfg *HTTPSRPProxyConf) CheckForCli() error {
+func (cfg *ServerHTTPSProxyConf) CheckForCli() error {
 	if err := cfg.HTTPProxyConf.CheckForCli(); err != nil {
 		return err
 	}
@@ -860,12 +860,12 @@ func (cfg *HTTPSRPProxyConf) CheckForCli() error {
 	return nil
 }
 
-func (cfg *HTTPSRPProxyConf) CheckForSvr(conf ServerCommonConf) error {
+func (cfg *ServerHTTPSProxyConf) CheckForSvr(conf ServerCommonConf) error {
 	return cfg.HTTPProxyConf.CheckForSvr(conf)
 }
 
-func (cfg *HTTPSRPProxyConf) Compare(conf ProxyConf) bool {
-	proxyConf, ok := conf.(*HTTPSRPProxyConf)
+func (cfg *ServerHTTPSProxyConf) Compare(conf ProxyConf) bool {
+	proxyConf, ok := conf.(*ServerHTTPSProxyConf)
 	if !ok {
 		return false
 	}

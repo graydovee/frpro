@@ -11,7 +11,7 @@ import (
 	"sync"
 )
 
-type HttpsReverseProxyServer struct {
+type ServerHttpsServer struct {
 	Addr         string
 	ReserveProxy *HTTPReverseProxy
 
@@ -22,7 +22,7 @@ type HttpsReverseProxyServer struct {
 	mu       sync.Mutex
 }
 
-func (h *HttpsReverseProxyServer) NewTlsListener(addr string) error {
+func (h *ServerHttpsServer) NewTlsListener(addr string) error {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
@@ -60,7 +60,7 @@ func (h *HttpsReverseProxyServer) NewTlsListener(addr string) error {
 	return nil
 }
 
-func (h *HttpsReverseProxyServer) RegisterTls(name, tlsCrt, tlsKey string) {
+func (h *ServerHttpsServer) RegisterTls(name, tlsCrt, tlsKey string) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
@@ -99,17 +99,17 @@ func (h *HttpsReverseProxyServer) RegisterTls(name, tlsCrt, tlsKey string) {
 	}
 }
 
-func (h *HttpsReverseProxyServer) UnRegisterTls(name string) {
+func (h *ServerHttpsServer) UnRegisterTls(name string) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
 	delete(h.crts, name)
 }
 
-func (h *HttpsReverseProxyServer) Serve() {
+func (h *ServerHttpsServer) Serve() {
 	for {
 		if err := h.NewTlsListener(h.Addr); err != nil {
-			log.Error("https reverse proxy listen err", err)
+			log.Error("server https listen err", err)
 			return
 		}
 		err := http.Serve(h.listener, h.ReserveProxy)

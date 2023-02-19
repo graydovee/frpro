@@ -215,8 +215,8 @@ func NewProxy(ctx context.Context, userInfo plugin.UserInfo, rc *controller.Reso
 			BaseProxy: &basePxy,
 			cfg:       cfg,
 		}
-	case *config.HTTPSRPProxyConf:
-		pxy = &HTTPSReverseProxy{
+	case *config.ServerHTTPSProxyConf:
+		pxy = &ServerHTTPS{
 			BaseProxy: &basePxy,
 			cfg:       cfg,
 		}

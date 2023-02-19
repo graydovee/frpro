@@ -92,13 +92,13 @@
   import Humanize from 'humanize-plus';
   import Traffic from './Traffic.vue'
   import {
-    HttpProxy, HttpsReverseProxy
+    HttpProxy, ServerHttpsProxy
   } from '../utils/proxy.js'
   export default {
     data() {
       return {
         proxies: new Array(),
-        vhost_https_reverse_proxy_port: "",
+        vhost_server_https_port: "",
         subdomain_host: ""
       }
     },
@@ -120,18 +120,18 @@
           .then(res => {
             return res.json()
           }).then(json => {
-            this.vhost_https_reverse_proxy_port = json.vhost_https_reverse_proxy_port
+            this.vhost_server_https_port = json.vhost_server_https_port
             this.subdomain_host = json.subdomain_host
-            if (this.vhost_https_reverse_proxy_port == null || this.vhost_https_reverse_proxy_port == 0) {
+            if (this.vhost_server_https_port == null || this.vhost_server_https_port == 0) {
               return
             } else {
-              fetch('../api/proxy/https_reverse_proxy', {credentials: 'include'})
+              fetch('../api/proxy/server_https', {credentials: 'include'})
                 .then(res => {
                   return res.json()
                 }).then(json => {
                   this.proxies = new Array()
                   for (let proxyStats of json.proxies) {
-                    this.proxies.push(new HttpsReverseProxy(proxyStats, this.vhost_https_reverse_proxy_port, this.subdomain_host))
+                    this.proxies.push(new ServerHttpsProxy(proxyStats, this.vhost_server_https_port, this.subdomain_host))
                   }
                 })
             }

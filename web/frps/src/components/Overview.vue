@@ -16,11 +16,11 @@
                         <el-form-item label="Http Port">
                           <span>{{ vhost_http_port }}</span>
                         </el-form-item>
-                        <el-form-item label="Https Reverse Proxy Port">
-                          <span>{{ vhost_https_reverse_proxy_port }}</span>
-                        </el-form-item>
                         <el-form-item label="Https Port">
                           <span>{{ vhost_https_port }}</span>
+                        </el-form-item>
+                        <el-form-item label="Server Https Port">
+                          <span>{{ vhost_server_https_port }}</span>
                         </el-form-item>
                         <el-form-item label="Subdomain Host">
                           <span>{{ subdomain_host }}</span>
@@ -64,7 +64,7 @@
                 bind_udp_port: '',
                 vhost_http_port: '',
                 vhost_https_port: '',
-                vhost_https_reverse_proxy_port: '',
+                vhost_server_https_port: '',
                 subdomain_host: '',
                 max_pool_count: '',
                 max_ports_per_client: '',
@@ -96,9 +96,9 @@
                 if (this.vhost_http_port == 0) {
                     this.vhost_http_port = "disable"
                 }
-                this.vhost_https_reverse_proxy_port = json.vhost_https_reverse_proxy_port
-                if (this.vhost_https_reverse_proxy_port == 0) {
-                  this.vhost_https_reverse_proxy_port = "disable"
+                this.vhost_server_https_port = json.vhost_server_https_port
+                if (this.vhost_server_https_port == 0) {
+                  this.vhost_server_https_port = "disable"
                 }
                 this.vhost_https_port = json.vhost_https_port
                 if (this.vhost_https_port == 0) {
@@ -127,8 +127,8 @@
                     if (json.proxy_type_count.https != null) {
                         this.proxy_counts += json.proxy_type_count.https
                     }
-                    if (json.proxy_type_count.https_reverse_proxy != null) {
-                        this.proxy_counts += json.proxy_type_count.https_reverse_proxy
+                    if (json.proxy_type_count.server_https != null) {
+                        this.proxy_counts += json.proxy_type_count.server_https
                     }
                     if (json.proxy_type_count.stcp != null) {
                         this.proxy_counts += json.proxy_type_count.stcp

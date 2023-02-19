@@ -15,7 +15,7 @@
                             <el-menu-item index="/proxies/tcp">TCP</el-menu-item>
                             <el-menu-item index="/proxies/udp">UDP</el-menu-item>
                             <el-menu-item index="/proxies/http">HTTP</el-menu-item>
-                            <el-menu-item index="/proxies/https_reverse_proxy">HTTPS Reverse Proxy</el-menu-item>
+                            <el-menu-item index="/proxies/server_https">ServerHTTPS</el-menu-item>
                             <el-menu-item index="/proxies/https">HTTPS</el-menu-item>
                             <el-menu-item index="/proxies/stcp">STCP</el-menu-item>
                             <el-menu-item index="/proxies/sudp">SUDP</el-menu-item>

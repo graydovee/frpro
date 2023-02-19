@@ -17,14 +17,14 @@ plugin_local_addr=gitea-http.git.svc.cluster.local:3000
 type=https
 ```
 
-### https_reverse_proxy
+### server_https
 
 * use like type "http", function like "https2http" plugin
 * support group
 
 ```ini
 [https_web]
-type = https_reverse_proxy
+type = server_https
 local_port = 4000
 custom_domains=example.domain
 tls_crts=publicKey1Base64,publicKey2Base64

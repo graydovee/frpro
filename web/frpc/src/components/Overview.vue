@@ -50,9 +50,9 @@
                 for (let s of json.https) {
                     this.status.push(s)
                 }
-                for (let s of json.https_reverse_proxy) {
+                for (let s of json.server_https) {
                   this.status.push(s)
-                }
+                }cd
                 for (let s of json.stcp) {
                     this.status.push(s)
                 }
