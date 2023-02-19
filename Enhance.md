@@ -1,6 +1,12 @@
 # frp Enhance
 
 ## Feature
+- [x] support config tls in config file
+- [x] https support group
+- [x] support redirect
+- [ ] support exact location
+
+## Guide
 
 ### https plugin enhance
 
@@ -29,6 +35,15 @@ local_port = 4000
 custom_domains=example.domain
 tls_crts=publicKey1Base64,publicKey2Base64
 tls_keys=privateKey1Base64,privateKey2Base64
+group=xxx
+group_key=xxx
+```
+
+### http redirect
+```ini
+[http_redirect]
+type = http
+redirect=https://baidu.com
 group=xxx
 group_key=xxx
 ```
