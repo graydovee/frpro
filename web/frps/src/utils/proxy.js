@@ -68,6 +68,14 @@ class HttpProxy extends BaseProxy {
     }
 }
 
+
+class ServerHttpsProxy extends HttpProxy {
+    constructor(proxyStats, port, subdomain_host) {
+        super(proxyStats, port, subdomain_host)
+        this.type = "server_https"
+    }
+}
+
 class HttpsProxy extends BaseProxy {
     constructor(proxyStats, port, subdomain_host) {
         super(proxyStats)
@@ -101,4 +109,4 @@ class SudpProxy extends BaseProxy {
     }
 }
 
-export {BaseProxy, TcpProxy, UdpProxy, HttpProxy, HttpsProxy, StcpProxy, SudpProxy}
+export {BaseProxy, TcpProxy, UdpProxy, HttpProxy, ServerHttpsProxy, HttpsProxy, StcpProxy, SudpProxy}

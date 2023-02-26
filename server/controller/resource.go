@@ -35,6 +35,9 @@ type ResourceController struct {
 	// HTTP Group Controller
 	HTTPGroupCtl *group.HTTPGroupController
 
+	// ServerHTTPS Group Controller
+	ServerHTTPSGroupCtl *group.HTTPGroupController
+
 	// TCP Mux Group Controller
 	TCPMuxGroupCtl *group.TCPMuxGroupCtl
 
@@ -46,6 +49,9 @@ type ResourceController struct {
 
 	// For HTTP proxies, forwarding HTTP requests
 	HTTPReverseProxy *vhost.HTTPReverseProxy
+
+	// For HTTPS proxies, forwarding HTTPS to HTTP requests
+	HttpsReverseProxy *vhost.ServerHttpsServer
 
 	// For HTTPS proxies, route requests to different clients by hostname and other information
 	VhostHTTPSMuxer *vhost.HTTPSMuxer

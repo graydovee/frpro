@@ -17,6 +17,7 @@ package plugin
 import (
 	"crypto/tls"
 	"fmt"
+	"github.com/fatedier/frp/pkg/util/util"
 	"io"
 	"net"
 	"net/http"
@@ -36,6 +37,8 @@ func init() {
 type HTTPS2HTTPSPlugin struct {
 	crtPath           string
 	keyPath           string
+	crtBase64         string
+	keyBase64         string
 	hostHeaderRewrite string
 	localAddr         string
 	headers           map[string]string
@@ -47,6 +50,8 @@ type HTTPS2HTTPSPlugin struct {
 func NewHTTPS2HTTPSPlugin(params map[string]string) (Plugin, error) {
 	crtPath := params["plugin_crt_path"]
 	keyPath := params["plugin_key_path"]
+	crtBase64 := params["plugin_crt_base64"]
+	keyBase64 := params["plugin_key_base64"]
 	localAddr := params["plugin_local_addr"]
 	hostHeaderRewrite := params["plugin_host_header_rewrite"]
 	headers := make(map[string]string)
@@ -68,6 +73,8 @@ func NewHTTPS2HTTPSPlugin(params map[string]string) (Plugin, error) {
 	p := &HTTPS2HTTPSPlugin{
 		crtPath:           crtPath,
 		keyPath:           keyPath,
+		crtBase64:         crtBase64,
+		keyBase64:         keyBase64,
 		localAddr:         localAddr,
 		hostHeaderRewrite: hostHeaderRewrite,
 		headers:           headers,
@@ -101,7 +108,9 @@ func NewHTTPS2HTTPSPlugin(params map[string]string) (Plugin, error) {
 		err       error
 	)
 	if crtPath != "" || keyPath != "" {
-		tlsConfig, err = p.genTLSConfig()
+		tlsConfig, err = p.genTLSConfigFromFile()
+	} else if crtBase64 != "" || keyBase64 != "" {
+		tlsConfig, err = p.genTLSConfigFromBase64()
 	} else {
 		tlsConfig, err = transport.NewServerTLSConfig("", "", "")
 		tlsConfig.InsecureSkipVerify = true
@@ -117,8 +126,18 @@ func NewHTTPS2HTTPSPlugin(params map[string]string) (Plugin, error) {
 	return p, nil
 }
 
-func (p *HTTPS2HTTPSPlugin) genTLSConfig() (*tls.Config, error) {
+func (p *HTTPS2HTTPSPlugin) genTLSConfigFromFile() (*tls.Config, error) {
 	cert, err := tls.LoadX509KeyPair(p.crtPath, p.keyPath)
+	if err != nil {
+		return nil, err
+	}
+
+	config := &tls.Config{Certificates: []tls.Certificate{cert}}
+	return config, nil
+}
+
+func (p *HTTPS2HTTPSPlugin) genTLSConfigFromBase64() (*tls.Config, error) {
+	cert, err := util.LoadX509KeyPair(p.crtBase64, p.keyBase64)
 	if err != nil {
 		return nil, err
 	}

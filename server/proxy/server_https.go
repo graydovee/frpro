@@ -20,27 +20,24 @@ import (
 	"strings"
 
 	frpIo "github.com/fatedier/golib/io"
-	"golang.org/x/time/rate"
 
 	"github.com/fatedier/frp/pkg/config"
-	"github.com/fatedier/frp/pkg/util/limit"
 	frpNet "github.com/fatedier/frp/pkg/util/net"
 	"github.com/fatedier/frp/pkg/util/util"
 	"github.com/fatedier/frp/pkg/util/vhost"
 	"github.com/fatedier/frp/server/metrics"
 )
 
-type HTTPProxy struct {
+type ServerHTTPS struct {
 	*BaseProxy
-	cfg *config.HTTPProxyConf
+	cfg *config.ServerHTTPSProxyConf
 
 	closeFuncs []func()
 }
 
-func (pxy *HTTPProxy) Run() (remoteAddr string, err error) {
+func (pxy *ServerHTTPS) Run() (remoteAddr string, err error) {
 	xl := pxy.xl
 	routeConfig := vhost.RouteConfig{
-		Redirect:        pxy.cfg.Redirect,
 		RewriteHost:     pxy.cfg.HostHeaderRewrite,
 		RouteByHTTPUser: pxy.cfg.RouteByHTTPUser,
 		Headers:         pxy.cfg.Headers,
@@ -74,25 +71,25 @@ func (pxy *HTTPProxy) Run() (remoteAddr string, err error) {
 
 			// handle group
 			if pxy.cfg.Group != "" {
-				err = pxy.rc.HTTPGroupCtl.Register(pxy.name, pxy.cfg.Group, pxy.cfg.GroupKey, routeConfig)
+				err = pxy.rc.ServerHTTPSGroupCtl.Register(pxy.name, pxy.cfg.Group, pxy.cfg.GroupKey, routeConfig)
 				if err != nil {
 					return
 				}
 
 				pxy.closeFuncs = append(pxy.closeFuncs, func() {
-					pxy.rc.HTTPGroupCtl.UnRegister(pxy.name, pxy.cfg.Group, tmpRouteConfig)
+					pxy.rc.ServerHTTPSGroupCtl.UnRegister(pxy.name, pxy.cfg.Group, tmpRouteConfig)
 				})
 			} else {
 				// no group
-				err = pxy.rc.HTTPReverseProxy.Register(routeConfig)
+				err = pxy.rc.HttpsReverseProxy.ReserveProxy.Register(routeConfig)
 				if err != nil {
 					return
 				}
 				pxy.closeFuncs = append(pxy.closeFuncs, func() {
-					pxy.rc.HTTPReverseProxy.UnRegister(tmpRouteConfig)
+					pxy.rc.HttpsReverseProxy.ReserveProxy.UnRegister(tmpRouteConfig)
 				})
 			}
-			addrs = append(addrs, util.CanonicalAddr(routeConfig.Domain, pxy.serverCfg.VhostHTTPPort))
+			addrs = append(addrs, util.CanonicalAddr(routeConfig.Domain, pxy.serverCfg.VhostServerHTTPPSPort))
 			xl.Info("http proxy listen for host [%s] location [%s] group [%s], routeByHTTPUser [%s]",
 				routeConfig.Domain, routeConfig.Location, pxy.cfg.Group, pxy.cfg.RouteByHTTPUser)
 		}
@@ -107,42 +104,43 @@ func (pxy *HTTPProxy) Run() (remoteAddr string, err error) {
 
 			// handle group
 			if pxy.cfg.Group != "" {
-				err = pxy.rc.HTTPGroupCtl.Register(pxy.name, pxy.cfg.Group, pxy.cfg.GroupKey, routeConfig)
+				err = pxy.rc.ServerHTTPSGroupCtl.Register(pxy.name, pxy.cfg.Group, pxy.cfg.GroupKey, routeConfig)
 				if err != nil {
 					return
 				}
 
 				pxy.closeFuncs = append(pxy.closeFuncs, func() {
-					pxy.rc.HTTPGroupCtl.UnRegister(pxy.name, pxy.cfg.Group, tmpRouteConfig)
+					pxy.rc.ServerHTTPSGroupCtl.UnRegister(pxy.name, pxy.cfg.Group, tmpRouteConfig)
 				})
 			} else {
-				err = pxy.rc.HTTPReverseProxy.Register(routeConfig)
+				err = pxy.rc.HttpsReverseProxy.ReserveProxy.Register(routeConfig)
 				if err != nil {
 					return
 				}
 				pxy.closeFuncs = append(pxy.closeFuncs, func() {
-					pxy.rc.HTTPReverseProxy.UnRegister(tmpRouteConfig)
+					pxy.rc.HttpsReverseProxy.ReserveProxy.UnRegister(tmpRouteConfig)
 				})
 			}
-			addrs = append(addrs, util.CanonicalAddr(tmpRouteConfig.Domain, pxy.serverCfg.VhostHTTPPort))
+			addrs = append(addrs, util.CanonicalAddr(tmpRouteConfig.Domain, pxy.serverCfg.VhostServerHTTPPSPort))
 
 			xl.Info("http proxy listen for host [%s] location [%s] group [%s], routeByHTTPUser [%s]",
 				routeConfig.Domain, routeConfig.Location, pxy.cfg.Group, pxy.cfg.RouteByHTTPUser)
 		}
 	}
+
+	pxy.rc.HttpsReverseProxy.RegisterTls(pxy.name, pxy.cfg.TlsCrts, pxy.cfg.TlsKeys)
+	pxy.closeFuncs = append(pxy.closeFuncs, func() {
+		pxy.rc.HttpsReverseProxy.UnRegisterTls(pxy.name)
+	})
 	remoteAddr = strings.Join(addrs, ",")
 	return
 }
 
-func (pxy *HTTPProxy) GetConf() config.ProxyConf {
+func (pxy *ServerHTTPS) GetConf() config.ProxyConf {
 	return pxy.cfg
 }
 
-func (pxy *HTTPProxy) GetLimiter() *rate.Limiter {
-	return pxy.limiter
-}
-
-func (pxy *HTTPProxy) GetRealConn(remoteAddr string) (workConn net.Conn, err error) {
+func (pxy *ServerHTTPS) GetRealConn(remoteAddr string) (workConn net.Conn, err error) {
 	xl := pxy.xl
 	rAddr, errRet := net.ResolveTCPAddr("tcp", remoteAddr)
 	if errRet != nil {
@@ -167,20 +165,13 @@ func (pxy *HTTPProxy) GetRealConn(remoteAddr string) (workConn net.Conn, err err
 	if pxy.cfg.UseCompression {
 		rwc = frpIo.WithCompression(rwc)
 	}
-
-	if pxy.GetLimiter() != nil {
-		rwc = frpIo.WrapReadWriteCloser(limit.NewReader(rwc, pxy.GetLimiter()), limit.NewWriter(rwc, pxy.GetLimiter()), func() error {
-			return rwc.Close()
-		})
-	}
-
 	workConn = frpNet.WrapReadWriteCloserToConn(rwc, tmpConn)
 	workConn = frpNet.WrapStatsConn(workConn, pxy.updateStatsAfterClosedConn)
 	metrics.Server.OpenConnection(pxy.GetName(), pxy.GetConf().GetBaseInfo().ProxyType)
 	return
 }
 
-func (pxy *HTTPProxy) updateStatsAfterClosedConn(totalRead, totalWrite int64) {
+func (pxy *ServerHTTPS) updateStatsAfterClosedConn(totalRead, totalWrite int64) {
 	name := pxy.GetName()
 	proxyType := pxy.GetConf().GetBaseInfo().ProxyType
 	metrics.Server.CloseConnection(name, proxyType)
@@ -188,7 +179,7 @@ func (pxy *HTTPProxy) updateStatsAfterClosedConn(totalRead, totalWrite int64) {
 	metrics.Server.AddTrafficOut(name, proxyType, totalRead)
 }
 
-func (pxy *HTTPProxy) Close() {
+func (pxy *ServerHTTPS) Close() {
 	pxy.BaseProxy.Close()
 	for _, closeFn := range pxy.closeFuncs {
 		closeFn()

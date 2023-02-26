@@ -16,6 +16,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/fatedier/frp/pkg/util/util"
 	"net"
 	"reflect"
 	"strconv"
@@ -163,12 +164,21 @@ type HTTPProxyConf struct {
 	BaseProxyConf `ini:",extends"`
 	DomainConf    `ini:",extends"`
 
+	Redirect          string            `ini:"redirect" json:"redirect"`
 	Locations         []string          `ini:"locations" json:"locations"`
 	HTTPUser          string            `ini:"http_user" json:"http_user"`
 	HTTPPwd           string            `ini:"http_pwd" json:"http_pwd"`
 	HostHeaderRewrite string            `ini:"host_header_rewrite" json:"host_header_rewrite"`
 	Headers           map[string]string `ini:"-" json:"headers"`
 	RouteByHTTPUser   string            `ini:"route_by_http_user" json:"route_by_http_user"`
+}
+
+// Server HTTPS
+type ServerHTTPSProxyConf struct {
+	HTTPProxyConf `ini:",extends"`
+
+	TlsCrts string `ini:"tls_crts"`
+	TlsKeys string `ini:"tls_keys"`
 }
 
 // HTTPS
@@ -244,6 +254,12 @@ func DefaultProxyConf(proxyType string) ProxyConf {
 	case consts.HTTPProxy:
 		conf = &HTTPProxyConf{
 			BaseProxyConf: defaultBaseProxyConf(proxyType),
+		}
+	case consts.ServerHTTPSProxy:
+		conf = &ServerHTTPSProxyConf{
+			HTTPProxyConf: HTTPProxyConf{
+				BaseProxyConf: defaultBaseProxyConf(proxyType),
+			},
 		}
 	case consts.HTTPSProxy:
 		conf = &HTTPSProxyConf{
@@ -791,6 +807,7 @@ func (cfg *HTTPProxyConf) UnmarshalFromMsg(pMsg *msg.NewProxy) {
 	cfg.CustomDomains = pMsg.CustomDomains
 	cfg.SubDomain = pMsg.SubDomain
 	cfg.Locations = pMsg.Locations
+	cfg.Redirect = pMsg.Redirect
 	cfg.HostHeaderRewrite = pMsg.HostHeaderRewrite
 	cfg.HTTPUser = pMsg.HTTPUser
 	cfg.HTTPPwd = pMsg.HTTPPwd
@@ -805,6 +822,7 @@ func (cfg *HTTPProxyConf) MarshalToMsg(pMsg *msg.NewProxy) {
 	pMsg.CustomDomains = cfg.CustomDomains
 	pMsg.SubDomain = cfg.SubDomain
 	pMsg.Locations = cfg.Locations
+	pMsg.Redirect = cfg.Redirect
 	pMsg.HostHeaderRewrite = cfg.HostHeaderRewrite
 	pMsg.HTTPUser = cfg.HTTPUser
 	pMsg.HTTPPwd = cfg.HTTPPwd
@@ -840,6 +858,66 @@ func (cfg *HTTPProxyConf) CheckForSvr(serverCfg ServerCommonConf) (err error) {
 	}
 
 	return
+}
+
+// ServerHTTPS
+func (cfg *ServerHTTPSProxyConf) UnmarshalFromMsg(pMsg *msg.NewProxy) {
+	cfg.HTTPProxyConf.UnmarshalFromMsg(pMsg)
+	cfg.TlsKeys = pMsg.TlsKeys
+	cfg.TlsCrts = pMsg.TlsCrts
+}
+
+func (cfg *ServerHTTPSProxyConf) UnmarshalFromIni(prefix string, name string, section *ini.Section) error {
+	err := preUnmarshalFromIni(cfg, prefix, name, section)
+	if err != nil {
+		return err
+	}
+
+	// Add custom logic unmarshal if exists
+	cfg.Headers = GetMapWithoutPrefix(section.KeysHash(), "header_")
+	return nil
+}
+
+func (cfg *ServerHTTPSProxyConf) MarshalToMsg(pMsg *msg.NewProxy) {
+	cfg.BaseProxyConf.marshalToMsg(pMsg)
+
+	// Add custom logic marshal if exists
+	pMsg.CustomDomains = cfg.CustomDomains
+	pMsg.SubDomain = cfg.SubDomain
+	pMsg.Locations = cfg.Locations
+	pMsg.HostHeaderRewrite = cfg.HostHeaderRewrite
+	pMsg.HTTPUser = cfg.HTTPUser
+	pMsg.HTTPPwd = cfg.HTTPPwd
+	pMsg.Headers = cfg.Headers
+	pMsg.RouteByHTTPUser = cfg.RouteByHTTPUser
+	pMsg.TlsKeys = cfg.TlsKeys
+	pMsg.TlsCrts = cfg.TlsCrts
+}
+
+func (cfg *ServerHTTPSProxyConf) CheckForCli() error {
+	if err := cfg.HTTPProxyConf.CheckForCli(); err != nil {
+		return err
+	}
+	_, err := util.LoadX509KeyPairs(cfg.TlsCrts, cfg.TlsKeys)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (cfg *ServerHTTPSProxyConf) CheckForSvr(conf ServerCommonConf) error {
+	return cfg.HTTPProxyConf.CheckForSvr(conf)
+}
+
+func (cfg *ServerHTTPSProxyConf) Compare(conf ProxyConf) bool {
+	proxyConf, ok := conf.(*ServerHTTPSProxyConf)
+	if !ok {
+		return false
+	}
+	if !cfg.HTTPProxyConf.Compare(&proxyConf.HTTPProxyConf) {
+		return false
+	}
+	return cfg.TlsKeys == cfg.TlsKeys && cfg.TlsCrts == cfg.TlsCrts
 }
 
 // HTTPS

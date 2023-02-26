@@ -71,13 +71,14 @@ func (svr *Service) apiReload(w http.ResponseWriter, r *http.Request) {
 }
 
 type StatusResp struct {
-	TCP   []ProxyStatusResp `json:"tcp"`
-	UDP   []ProxyStatusResp `json:"udp"`
-	HTTP  []ProxyStatusResp `json:"http"`
-	HTTPS []ProxyStatusResp `json:"https"`
-	STCP  []ProxyStatusResp `json:"stcp"`
-	XTCP  []ProxyStatusResp `json:"xtcp"`
-	SUDP  []ProxyStatusResp `json:"sudp"`
+	TCP         []ProxyStatusResp `json:"tcp"`
+	UDP         []ProxyStatusResp `json:"udp"`
+	HTTP        []ProxyStatusResp `json:"http"`
+	HTTPS       []ProxyStatusResp `json:"https"`
+	ServerHttps []ProxyStatusResp `json:"server_https"`
+	STCP        []ProxyStatusResp `json:"stcp"`
+	XTCP        []ProxyStatusResp `json:"xtcp"`
+	SUDP        []ProxyStatusResp `json:"sudp"`
 }
 
 type ProxyStatusResp struct {
@@ -163,6 +164,7 @@ func (svr *Service) apiStatus(w http.ResponseWriter, r *http.Request) {
 	res.TCP = make([]ProxyStatusResp, 0)
 	res.UDP = make([]ProxyStatusResp, 0)
 	res.HTTP = make([]ProxyStatusResp, 0)
+	res.ServerHttps = make([]ProxyStatusResp, 0)
 	res.HTTPS = make([]ProxyStatusResp, 0)
 	res.STCP = make([]ProxyStatusResp, 0)
 	res.XTCP = make([]ProxyStatusResp, 0)
@@ -184,6 +186,8 @@ func (svr *Service) apiStatus(w http.ResponseWriter, r *http.Request) {
 			res.UDP = append(res.UDP, NewProxyStatusResp(status, svr.cfg.ServerAddr))
 		case "http":
 			res.HTTP = append(res.HTTP, NewProxyStatusResp(status, svr.cfg.ServerAddr))
+		case "server_https":
+			res.ServerHttps = append(res.ServerHttps, NewProxyStatusResp(status, svr.cfg.ServerAddr))
 		case "https":
 			res.HTTPS = append(res.HTTPS, NewProxyStatusResp(status, svr.cfg.ServerAddr))
 		case "stcp":
@@ -197,6 +201,7 @@ func (svr *Service) apiStatus(w http.ResponseWriter, r *http.Request) {
 	sort.Sort(ByProxyStatusResp(res.TCP))
 	sort.Sort(ByProxyStatusResp(res.UDP))
 	sort.Sort(ByProxyStatusResp(res.HTTP))
+	sort.Sort(ByProxyStatusResp(res.ServerHttps))
 	sort.Sort(ByProxyStatusResp(res.HTTPS))
 	sort.Sort(ByProxyStatusResp(res.STCP))
 	sort.Sort(ByProxyStatusResp(res.XTCP))

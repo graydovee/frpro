@@ -102,11 +102,14 @@ type NewProxy struct {
 	CustomDomains     []string          `json:"custom_domains,omitempty"`
 	SubDomain         string            `json:"subdomain,omitempty"`
 	Locations         []string          `json:"locations,omitempty"`
+	Redirect          string            `json:"redirect"`
 	HTTPUser          string            `json:"http_user,omitempty"`
 	HTTPPwd           string            `json:"http_pwd,omitempty"`
 	HostHeaderRewrite string            `json:"host_header_rewrite,omitempty"`
 	Headers           map[string]string `json:"headers,omitempty"`
 	RouteByHTTPUser   string            `json:"route_by_http_user,omitempty"`
+	TlsKeys           string            `json:"tls_keys,omitempty"`
+	TlsCrts           string            `json:"tls_crts,omitempty"`
 
 	// stcp
 	Sk string `json:"sk,omitempty"`

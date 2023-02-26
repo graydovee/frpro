@@ -65,6 +65,10 @@ type ServerCommonConf struct {
 	// Vhost requests. If this value is 0, the server will not listen for HTTPS
 	// requests. By default, this value is 0.
 	VhostHTTPSPort int `ini:"vhost_https_port" json:"vhost_https_port" validate:"gte=0,lte=65535"`
+	//VhostServerHTTPPSPort specifies the port that the server listens for HTTPS Vhost
+	// requests. If this value is 0, the server will not listen for Server HTTPS
+	// requests. By default, this value is 0.
+	VhostServerHTTPPSPort int `ini:"vhost_server_https_port" json:"vhost_server_https_port" validate:"gte=0,lte=65535"`
 	// TCPMuxHTTPConnectPort specifies the port that the server listens for TCP
 	// HTTP CONNECT requests. If the value is 0, the server will not multiplex TCP
 	// requests on one single port. If it's not - it will listen on this value for

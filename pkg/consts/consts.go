@@ -23,14 +23,15 @@ var (
 	Offline = "offline"
 
 	// proxy type
-	TCPProxy    = "tcp"
-	UDPProxy    = "udp"
-	TCPMuxProxy = "tcpmux"
-	HTTPProxy   = "http"
-	HTTPSProxy  = "https"
-	STCPProxy   = "stcp"
-	XTCPProxy   = "xtcp"
-	SUDPProxy   = "sudp"
+	TCPProxy         = "tcp"
+	UDPProxy         = "udp"
+	TCPMuxProxy      = "tcpmux"
+	HTTPProxy        = "http"
+	ServerHTTPSProxy = "server_https"
+	HTTPSProxy       = "https"
+	STCPProxy        = "stcp"
+	XTCPProxy        = "xtcp"
+	SUDPProxy        = "sudp"
 
 	// authentication method
 	TokenAuthMethod = "token"

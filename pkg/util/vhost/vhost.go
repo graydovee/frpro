@@ -90,6 +90,7 @@ type CreateConnByEndpointFunc func(endpoint, remoteAddr string) (net.Conn, error
 type RouteConfig struct {
 	Domain          string
 	Location        string
+	Redirect        string
 	RewriteHost     string
 	Username        string
 	Password        string
