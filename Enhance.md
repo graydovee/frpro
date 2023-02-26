@@ -5,6 +5,7 @@
 - [x] https support group
 - [x] support redirect
 - [ ] support exact location
+- [ ] support multi server
 
 ## Guide
 
