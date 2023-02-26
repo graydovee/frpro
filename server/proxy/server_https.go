@@ -15,6 +15,7 @@
 package proxy
 
 import (
+	"golang.org/x/time/rate"
 	"io"
 	"net"
 	"strings"
@@ -33,6 +34,10 @@ type ServerHTTPS struct {
 	cfg *config.ServerHTTPSProxyConf
 
 	closeFuncs []func()
+}
+
+func (pxy *ServerHTTPS) GetLimiter() *rate.Limiter {
+	return pxy.limiter
 }
 
 func (pxy *ServerHTTPS) Run() (remoteAddr string, err error) {
